@@ -7,22 +7,19 @@
 
 
 import vapoursynth as vs
+core = vs.get_core()
 
+def bt2390_ictcp(clip="", source_peak=None, target_nits=""):
 
-def bt2390_ictcp(clip="", source_peak=None, target_nits="" ):
-    core = vs.get_core()
     c = clip
 
     if source_peak is None:
        source_peak = c.get_frame(0).props.MasteringDisplayMaxLuminance
 
-
     primaries      = "2020"
-    source_peak    = source_peak
     matrix_in_s    = "2020ncl"
     transfer_in_s  = "st2084"
     exposure_bias1 = source_peak / target_nits
-    source_peak    = source_peak
     width          = c.width
     height         = c.height
     width_n        = 1920
@@ -122,20 +119,17 @@ def bt2390_ictcp(clip="", source_peak=None, target_nits="" ):
     return c
 
 
-def reinhard_xyy(clip="", source_peak=None, target_nits="" ):
-    core = vs.get_core()
-    c    = clip
+def reinhard_xyy(clip="", source_peak=None, target_nits=""):
+
+    c = clip
 
     if source_peak is None:
        source_peak = c.get_frame(0).props.MasteringDisplayMaxLuminance
 
-
     primaries      = "2020"
-    source_peak    = source_peak
     matrix_in_s    = "2020ncl"
     transfer_in_s  = "st2084"
     exposure_bias1 = source_peak / target_nits
-    source_peak    = source_peak
     width          = c.width
     height         = c.height
     width_n        = 1920
@@ -187,12 +181,11 @@ def reinhard_xyy(clip="", source_peak=None, target_nits="" ):
 
 
 def reinhard_yuv(clip="", source_peak=None, target_nits=""):
-    core = vs.get_core()
-    c    = clip
+
+    c = clip
 
     if source_peak is None:
        source_peak = c.get_frame(0).props.MasteringDisplayMaxLuminance
-
 
     primaries      = "2020"
     matrix_in_s    = "2020ncl"
@@ -215,9 +208,9 @@ def reinhard_yuv(clip="", source_peak=None, target_nits=""):
     y1 = core.std.ShufflePlanes(c, planes=[0], colorfamily=vs.GRAY)
     y1 = core.std.ShufflePlanes(y1, planes=[0,0,0], colorfamily=vs.YUV)
 
-    saturation_mult1 = core.std.Expr(clips=[y1], expr=" x 1 - {exposure_bias1} 1 - / ".format(exposure_bias1=exposure_bias1, target_nits=target_nits))
+    saturation_mult1 = core.std.Expr(clips=[y1], expr=" x 1 - {exposure_bias1} 1 - / ".format(exposure_bias1=exposure_bias1))
     saturation_mult1 = core.std.Limiter(saturation_mult1, 0, 1)
-    saturation_mult1 = core.std.Expr(clips=[saturation_mult1], expr=" 1 x 0.5 * - ".format(exposure_bias1=exposure_bias1))
+    saturation_mult1 = core.std.Expr(clips=[saturation_mult1], expr=[" 1 x 0.5 * - "])
     saturation_mult1 = core.std.ShufflePlanes(saturation_mult1, planes=[0,0,0], colorfamily=vs.YUV)
 
     c = core.std.Expr(clips=[c, saturation_mult1], expr=[" x ", " x y * ", " x y * "])
@@ -256,19 +249,16 @@ def reinhard_yuv(clip="", source_peak=None, target_nits=""):
 
 
 def reinhard_rgby(clip="", source_peak=None, target_nits="" ):
-    core = vs.get_core()
-    c    = clip
+
+    c = clip
 
     if source_peak is None:
        source_peak = c.get_frame(0).props.MasteringDisplayMaxLuminance
 
-
     primaries      = "2020"
-    source_peak    = source_peak
     matrix_in_s    = "2020ncl"
     transfer_in_s  = "st2084"
     exposure_bias1 = source_peak / target_nits
-    source_peak    = source_peak
     width          = c.width
     height         = c.height
     width_n        = 1920
@@ -311,8 +301,8 @@ def reinhard_rgby(clip="", source_peak=None, target_nits="" ):
 
 
 def bt2390_new(clip="", source_peak=None, target_nits="", transfer=None, matrix=None, primaries=None):
-    core = vs.get_core()
-    c    = clip
+
+    c = clip
 
     if source_peak is None:
        source_peak = c.get_frame(0).props.MasteringDisplayMaxLuminance
@@ -334,11 +324,8 @@ def bt2390_new(clip="", source_peak=None, target_nits="", transfer=None, matrix=
     if primaries == 1:
        primaries = "709"
 
-
-    source_peak   = source_peak
     matrix_in_s   = matrix
     transfer_in_s = transfer
-    source_peak   = source_peak
     width         = c.width
     height        = c.height
     width_n       = 1920
@@ -422,19 +409,16 @@ def bt2390_new(clip="", source_peak=None, target_nits="", transfer=None, matrix=
 
 
 def reinhard_new(clip="", source_peak=None, target_nits="" ):
-    core = vs.get_core()
-    c    = clip
+
+    c = clip
 
     if source_peak is None:
        source_peak = c.get_frame(0).props.MasteringDisplayMaxLuminance
 
-
     primaries      = "2020"
-    source_peak    = source_peak
     matrix_in_s    = "2020ncl"
     transfer_in_s  = "st2084"
     exposure_bias1 = source_peak / target_nits
-    source_peak    = source_peak
     width          = c.width
     height         = c.height
     width_n        = 1920
