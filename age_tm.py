@@ -36,12 +36,12 @@ def bt2390_ictcp(clip="", source_peak=None, target_nits="" ):
     lw = ((((lw ** 0.1593017578125) * 18.8515625) + 0.8359375) / (((lw ** 0.1593017578125) * 18.6875) + 1)) ** 78.84375
 
 
-    lmax=target_nits / 10000
+    lmax = target_nits / 10000
     #eotf^-1  y=((x^0.1593017578125) * 18.8515625 + 0.8359375  /   (x^0.1593017578125) * 18.6875 + 1)^78.84375
     lmax = ((((lmax ** 0.1593017578125) * 18.8515625) + 0.8359375) / (((lmax ** 0.1593017578125) * 18.6875) + 1)) ** 78.84375
 
     #maxlum=(lmax-0)/(lw-0) ==> maxlum=lmax/lw
-    maxlum=lmax / lw
+    maxlum = lmax / lw
 
     ks1 = (1.5 * lmax) - 0.5
     ks2 = (1.5 * maxlum) - 0.5
@@ -186,7 +186,7 @@ def reinhard_xyy(clip="", source_peak=None, target_nits="" ):
     return c
 
 
-def reinhard_yuv(clip="", source_peak=None, target_nits="" ):
+def reinhard_yuv(clip="", source_peak=None, target_nits=""):
     core = vs.get_core()
     c    = clip
 
@@ -195,11 +195,9 @@ def reinhard_yuv(clip="", source_peak=None, target_nits="" ):
 
 
     primaries      = "2020"
-    source_peak    = source_peak
     matrix_in_s    = "2020ncl"
     transfer_in_s  = "st2084"
     exposure_bias1 = source_peak / target_nits
-    source_peak    = source_peak
     width          = c.width
     height         = c.height
     width_n        = 1920
@@ -209,49 +207,48 @@ def reinhard_yuv(clip="", source_peak=None, target_nits="" ):
     c = core.resize.Bicubic(clip=c, format=vs.YUV444PS, filter_param_a=0, width=width_n, height=height_n, filter_param_b=0.75, chromaloc_in_s="center", chromaloc_s="center", range_in_s="limited", range_s="full", dither_type="none")
     c = core.resize.Bicubic(clip=c, format=vs.RGBS, filter_param_a=0, filter_param_b=0.75, chromaloc_in_s="center", transfer_in_s=transfer_in_s, transfer_s="linear", chromaloc_s="center", range_in_s="full", range_s="full", dither_type="none", nominal_luminance=source_peak, matrix_in_s=matrix_in_s)
 
-    c = core.std.Expr(clips=[c], expr=" x {exposure_bias1} * ".format(exposure_bias1=exposure_bias1))
-    crgb = core.std.Expr(clips=[c], expr="  x {exposure_bias1} {exposure_bias1} * / 1 + x *  x 1 + /".format(exposure_bias1=exposure_bias1))
+    c    = core.std.Expr(clips=[c], expr=" x {exposure_bias1} * ".format(exposure_bias1=exposure_bias1))
+    crgb = core.std.Expr(clips=[c], expr=" x {exposure_bias1} {exposure_bias1} * / 1 + x * x 1 + /".format(exposure_bias1=exposure_bias1))
 
     c = core.resize.Bicubic(clip=c, format=vs.YUV444PS, filter_param_a=0, filter_param_b=0.75, chromaloc_in_s="center", matrix_s=matrix_in_s, chromaloc_s="center", range_in_s="full", range_s="full", dither_type="none")
 
     y1 = core.std.ShufflePlanes(c, planes=[0], colorfamily=vs.GRAY)
     y1 = core.std.ShufflePlanes(y1, planes=[0,0,0], colorfamily=vs.YUV)
 
-    saturation_mult1 = core.std.Expr(clips=[y1], expr=" x 1  -     {exposure_bias1} 1 -  / ".format(exposure_bias1=exposure_bias1,target_nits=target_nits))
-    saturation_mult1 = core.std.Limiter(saturation_mult1, 0,1)
+    saturation_mult1 = core.std.Expr(clips=[y1], expr=" x 1 - {exposure_bias1} 1 - / ".format(exposure_bias1=exposure_bias1, target_nits=target_nits))
+    saturation_mult1 = core.std.Limiter(saturation_mult1, 0, 1)
     saturation_mult1 = core.std.Expr(clips=[saturation_mult1], expr=" 1 x 0.5 * - ".format(exposure_bias1=exposure_bias1))
-
     saturation_mult1 = core.std.ShufflePlanes(saturation_mult1, planes=[0,0,0], colorfamily=vs.YUV)
-    c = core.std.Expr(clips=[c,saturation_mult1], expr=["  x "," x y *  "," x y *  "])
 
-    c = core.std.Expr(clips=[c], expr=["  x {exposure_bias1} {exposure_bias1} * / 1 + x *  x 1 + /".format(exposure_bias1=exposure_bias1),"",""])
+    c = core.std.Expr(clips=[c, saturation_mult1], expr=[" x ", " x y * ", " x y * "])
+    c = core.std.Expr(clips=[c], expr=[" x {exposure_bias1} {exposure_bias1} * / 1 + x * x 1 + /".format(exposure_bias1=exposure_bias1), "", ""])
 
     y2 = core.std.ShufflePlanes(c, planes=[0], colorfamily=vs.GRAY)
     y2_notclipped = y2
-    y2 = core.std.Limiter(y2,0,1)
+    y2 = core.std.Limiter(y2, 0, 1)
     y2_notclipped = core.std.ShufflePlanes(y2_notclipped, planes=[0,0,0], colorfamily=vs.YUV)
 
     y2 = core.std.ShufflePlanes(y2, planes=[0,0,0], colorfamily=vs.YUV)
 
-    saturation_mult2 = core.std.Expr(clips=[y2_notclipped,y2], expr=" x   y / y x / min ")
-    saturation_mult2 = core.std.Limiter(saturation_mult2, 0,1)
+    saturation_mult2 = core.std.Expr(clips=[y2_notclipped, y2], expr=" x y / y x / min ")
+    saturation_mult2 = core.std.Limiter(saturation_mult2, 0, 1)
     saturation_mult2 = core.std.ShufflePlanes(saturation_mult2, planes=[0,0,0], colorfamily=vs.YUV)
 
-    c = core.std.Expr(clips=[c,saturation_mult2], expr=[" x "," x y * "," x y * "])
-    c = core.std.Limiter(c, 0,1,planes=0)
+    c = core.std.Expr(clips=[c, saturation_mult2], expr=[" x ", " x y * ", " x y * "])
+    c = core.std.Limiter(c, 0, 1, planes=0)
 
-    saturation_mult3 = core.std.Expr(clips=[y1,y2], expr=" x   y / y x / min ")
+    saturation_mult3 = core.std.Expr(clips=[y1, y2], expr=" x   y / y x / min ")
     saturation_mult3 = core.std.Limiter(saturation_mult3, 0,1)
     saturation_mult3 = core.std.ShufflePlanes(saturation_mult3, planes=[0,0,0], colorfamily=vs.YUV)
 
-    c = core.std.Expr(clips=[c,saturation_mult3], expr=[" x "," x y * "," x y * "])
+    c = core.std.Expr(clips=[c,saturation_mult3], expr=[" x ", " x y * ", " x y * "])
     c = core.resize.Bicubic(clip=c, format=vs.RGBS, filter_param_a=0, filter_param_b=0.75, chromaloc_in_s="center", chromaloc_s="center", range_in_s="full", range_s="full", dither_type="none", nominal_luminance=source_peak, matrix_in_s=matrix_in_s)
 
     c = core.std.Merge(c, crgb, 0.5)
 
     c = core.resize.Bicubic(clip=c, format=vs.RGBS, primaries_in_s="2020" , primaries_s="709", dither_type="none")
     c = core.resize.Bicubic(clip=c, format=vs.RGBS, transfer_in_s="linear", transfer_s="709", dither_type="none")
-    c = core.std.Limiter(c, 0,1)
+    c = core.std.Limiter(c, 0, 1)
 
     c = core.resize.Bicubic(clip=c, format=vs.YUV422P16, matrix_s="709", filter_param_a=0, filter_param_b=0.75, range_in_s="full",range_s="limited", chromaloc_in_s="center", chromaloc_s="center", dither_type="none")
 
@@ -328,7 +325,7 @@ def bt2390_new(clip="", source_peak=None, target_nits="", transfer=None, matrix=
        transfer = "st2084"
     if transfer == 18:
        transfer = "std-b67"
-    if matrix == 9：
+    if matrix == 9:
        matrix = "2020ncl"
     if primaries is None:
        primaries = c.get_frame(0).props._Primaries
